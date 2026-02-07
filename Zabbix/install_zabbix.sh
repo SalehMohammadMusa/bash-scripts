@@ -8,11 +8,12 @@ fi
 #check which operating system its running 
 OS_NAME=$( grep "^ID=" /etc/os-release | cut -d"=" -f2 | tr -d '"')
 #check if there is already a zabbix installed and active in the server
-if systemctl is-active --quiet zabbix-agent; then
-    agent_status='zabbix-agent'
-elif systemctl is-active --quiet zabbix-agent2; then
+if systemctl list-unit-files zabbix-agent2.service &>/dev/null || command -v zabbix_agent2 &>/dev/null; then
     agent_status='zabbix-agent2'
-
+    systemctl stop zabbix-agent2
+elif systemctl list-unit-files zabbix-agent.service &>/dev/null || command -v zabbix_agentd &>/dev/null; then
+    agent_status='zabbix-agent'
+    systemctl stop zabbix-agent
 else 
     agent_status='none'
 fi
@@ -84,7 +85,7 @@ echo "zabbix installed successfuly"
 
 #we change the configuraiton 
 ZABBIX_SERVER="example.com.1,example.com.2"
-sed -i "s|^Server=.*|$ZABBIX_SERVER|" /etc/zabbix/zabbix_agent2.conf
+sed -i "s|^Server=.*|Server=$ZABBIX_SERVER|" /etc/zabbix/zabbix_agent2.conf
 sed -i "s|^ServerActive=.*|ServerActive=$ZABBIX_SERVER|" /etc/zabbix/zabbix_agent2.conf
 
 
